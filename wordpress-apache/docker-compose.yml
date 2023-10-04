@@ -1,0 +1,67 @@
+version: '3.3'
+
+services:
+
+    wpdb:
+        image: mysql:5.7
+        environment: 
+            MYSQL_DATABASE: ${WP_DB_NAME:-wpdb}
+            MYSQL_USER: ${WP_DB_USER:-wpdb}
+            MYSQL_PASSWORD: ${WP_DB_PASS:-wpdb}
+            MYSQL_RANDOM_ROOT_PASSWORD: '1'
+        volumes: 
+            - wpdb:/var/lib/mysql
+        ports:
+            - ${WP_DB_PORT:-3306}:3306
+        networks:
+            - wp_network
+
+    wordpress:
+        image: wordpress:latest
+        working_dir: /var/www/html
+        env_file: .env
+        ports: 
+            - ${WP_PORT:-8080}:80
+        environment: 
+            WORDPRESS_DB_HOST: ${WP_DB_HOST:-wpdb}
+            WORDPRESS_DB_USER: ${WP_DB_USER:-wpdb}
+            WORDPRESS_DB_PASSWORD: ${WP_DB_PASS:-wpdb}
+            WORDPRESS_DB_NAME: ${WP_DB_NAME:-wpdb}
+        volumes: 
+            - .:/var/www/html/wp-content/plugins/sas-wp-plugin
+            - .:/var/www/html/wp-content/themes/sas-wp-theme
+        extra_hosts:
+            - "somehost:127.0.0.1"
+        networks:
+            - wp_network
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        environment:
+            PMA_HOST: ${WP_DB_HOST:-wpdb}
+            PMA_PORT: 3306
+            PMA_USER: ${WP_DB_USER:-wpdb}
+            PMA_PASSWORD: ${WP_DB_PASS:-wpdb}
+            PMA_ARBITRARY: 1
+        ports:
+            - ${PMA_PORT:-8085}:80
+        networks:
+            - wp_network
+
+    vite:
+        image: node:lts
+        working_dir: /var/www/html/wp-content/plugins/sas-wp-plugin
+        command: bash -c "yarn install && yarn dev"
+        env_file: .env
+        ports: 
+            - ${VITE_PORT:-5173}:${VITE_PORT:-5173}
+        volumes: 
+            - .:/var/www/html/wp-content/plugins/sas-wp-plugin
+        tty: true
+        
+volumes:
+    wpdb:
+
+networks:
+    wp_network:
+        driver: bridge
