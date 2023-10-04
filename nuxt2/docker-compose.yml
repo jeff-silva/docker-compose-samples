@@ -1,0 +1,16 @@
+# docker-compose up --build --force-recreate --remove-orphans
+version: '3.7'
+services:
+  app:
+    build: ./.docker/app
+    env_file: .env
+    ports:
+      - '${NUXT_PORT:-3000}:${NUXT_PORT:-3000}'
+    volumes:
+      - '.:/app'
+      - '/app/node_modules'
+    environment:
+      - NODE_ENV=development
+      - CHOKIDAR_USEPOLLING=true
+      - HOST=${NUXT_HOST:-0.0.0.0}
+      - PORT=${NUXT_PORT:-3000}
